@@ -235,7 +235,7 @@ onMounted(async () => {
           aria-hidden="true"
         >
           <div class="tl-today absolute top-0 bottom-0 left-0 w-0.5 -translate-x-1/2 bg-jira-today"></div>
-          <span class="tl-today-tag absolute top-2.5 left-0 -translate-x-1/2 rounded-[3px] bg-jira-today px-1.5 py-0.5 text-[10px] leading-none font-bold tracking-wide text-white">TODAY</span>
+          <span class="tl-today-tag absolute top-2.5 left-0 -translate-x-1/2 rounded-[3px] bg-[#C25100] px-1.5 py-0.5 text-[10px] leading-none font-bold tracking-wide text-white">TODAY</span>
         </div>
       </div>
 

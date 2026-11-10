@@ -121,14 +121,16 @@ function init() {
   /* ---------- Section labels: typed out with a blinking cursor ---------- */
   gsap.utils.toArray<HTMLElement>('[data-typed]').forEach((el) => {
     const text = (el.textContent ?? '').trim();
-    el.setAttribute('aria-label', text);
     el.textContent = '';
+    const sr = document.createElement('span');
+    sr.className = 'sr-only';
+    sr.textContent = text; // screen readers get the full label immediately
     const out = document.createElement('span');
     out.setAttribute('aria-hidden', 'true');
     const cursor = document.createElement('span');
     cursor.className = 'typed-cursor';
     cursor.setAttribute('aria-hidden', 'true');
-    el.append(out, cursor);
+    el.append(sr, out, cursor);
 
     const state = { n: 0 };
     gsap
