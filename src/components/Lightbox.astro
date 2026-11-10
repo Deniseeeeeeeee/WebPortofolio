@@ -1,0 +1,89 @@
+---
+---
+
+<dialog id="lightbox" class="lightbox m-0 h-full max-h-none w-full max-w-none bg-transparent p-0 backdrop:bg-ink/90" aria-label="Image viewer">
+  <div class="flex h-full w-full flex-col items-center justify-center gap-4 p-4 md:p-10">
+    <figure class="flex max-h-full min-h-0 w-full max-w-6xl flex-1 flex-col items-center justify-center">
+      <img class="lb-img max-h-[78vh] w-auto max-w-full rounded-card object-contain shadow-2xl" alt="" />
+      <figcaption class="lb-caption mt-3 text-center text-[14px] text-white/80"></figcaption>
+    </figure>
+    <div class="flex items-center gap-3">
+      <button type="button" class="lb-prev btn btn-ghost-dark !px-3" aria-label="Previous image">
+        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6" /></svg>
+      </button>
+      <span class="lb-count label-mono min-w-14 text-center text-white/75"></span>
+      <button type="button" class="lb-next btn btn-ghost-dark !px-3" aria-label="Next image">
+        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+      </button>
+      <button type="button" class="lb-close btn btn-ghost-dark ml-2 !px-3" aria-label="Close image viewer">
+        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18" /></svg>
+      </button>
+    </div>
+  </div>
+</dialog>
+
+<style>
+  .lightbox[open] {
+    display: block;
+  }
+</style>
+
+<script>
+  const dialog = document.getElementById('lightbox') as HTMLDialogElement;
+  const img = dialog.querySelector<HTMLImageElement>('.lb-img')!;
+  const caption = dialog.querySelector<HTMLElement>('.lb-caption')!;
+  const count = dialog.querySelector<HTMLElement>('.lb-count')!;
+  const prev = dialog.querySelector<HTMLButtonElement>('.lb-prev')!;
+  const next = dialog.querySelector<HTMLButtonElement>('.lb-next')!;
+  const close = dialog.querySelector<HTMLButtonElement>('.lb-close')!;
+
+  let items: HTMLElement[] = [];
+  let i = 0;
+  let opener: HTMLElement | null = null;
+
+  const show = (n: number) => {
+    i = (n + items.length) % items.length;
+    const el = items[i];
+    img.src = el.dataset.full!;
+    img.alt = el.dataset.alt ?? '';
+    caption.textContent = el.dataset.alt ?? '';
+    count.textContent = `${i + 1} / ${items.length}`;
+    const multi = items.length > 1;
+    prev.hidden = !multi;
+    next.hidden = !multi;
+    count.hidden = !multi;
+  };
+
+  document.querySelectorAll<HTMLElement>('[data-lightbox]').forEach((el) => {
+    el.addEventListener('click', () => {
+      items = Array.from(document.querySelectorAll<HTMLElement>(`[data-lightbox="${el.dataset.lightbox}"]`));
+      opener = el;
+      show(items.indexOf(el));
+      dialog.showModal(); // native modal: inert background, focus contained, Esc closes
+      document.documentElement.classList.add('lenis-stopped');
+      close.focus();
+    });
+  });
+
+  prev.addEventListener('click', () => show(i - 1));
+  next.addEventListener('click', () => show(i + 1));
+  close.addEventListener('click', () => dialog.close());
+  dialog.addEventListener('click', (e) => {
+    if (e.target === dialog || (e.target as HTMLElement).matches('.flex.h-full')) dialog.close();
+  });
+  dialog.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') { e.preventDefault(); show(i - 1); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); show(i + 1); }
+    if (e.key === 'Tab') {
+      // keep focus cycling within the dialog's buttons
+      const f = Array.from(dialog.querySelectorAll<HTMLButtonElement>('button:not([hidden])'));
+      const first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  });
+  dialog.addEventListener('close', () => {
+    document.documentElement.classList.remove('lenis-stopped');
+    opener?.focus();
+  });
+</script>

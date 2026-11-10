@@ -1,0 +1,25 @@
+---
+import { projects } from '../data/projects';
+import SectionLabel from './SectionLabel.astro';
+import ProjectCase from './ProjectCase.astro';
+import Lightbox from './Lightbox.astro';
+---
+
+<section id="projects" class="section-pad bg-white" aria-labelledby="projects-title">
+  <div class="container-content">
+    <SectionLabel text="02 / CASE STUDIES" />
+    <h2 id="projects-title" class="h2-section reveal-h2 mt-3">Selected projects</h2>
+
+    <div class="mt-10 md:mt-14">
+      {
+        projects.map((p, i) => (
+          <>
+            {i > 0 && <hr class="my-14 border-line md:my-20" />}
+            <ProjectCase project={p} index={i} />
+          </>
+        ))
+      }
+    </div>
+  </div>
+  <Lightbox />
+</section>
