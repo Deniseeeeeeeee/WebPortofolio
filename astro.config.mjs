@@ -8,6 +8,7 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   site: 'https://deniseaditya.vercel.app',
   output: 'static',
+  devToolbar: { enabled: false },
   integrations: [vue(), sitemap()],
   vite: { plugins: [tailwindcss()] },
 });

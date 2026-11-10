@@ -1,0 +1,39 @@
+---
+import { profile } from '../data/profile';
+import SectionLabel from './SectionLabel.astro';
+const year = 2026;
+---
+
+<section id="contact" class="bg-contact relative overflow-hidden text-white" aria-labelledby="contact-title">
+  <div class="contact-glow glow-blue -top-56 -right-40 h-[680px] w-[680px] opacity-40" aria-hidden="true"></div>
+
+  <div class="container-content section-pad relative">
+    <SectionLabel text="04 / CONTACT" dark />
+    <h2 id="contact-title" class="contact-title h2-section mt-3 max-w-[15em] !leading-[1.08] md:!text-[56px]">
+      Looking for an intern who keeps projects on track?
+    </h2>
+    <p class="contact-fade text-lead mt-5 max-w-[30rem] text-white/75">
+      I'm open to internships in project management, system analysis and software engineering.
+    </p>
+
+    <div class="contact-fade mt-8 flex flex-wrap gap-3">
+      <a href={`mailto:${profile.email}`} class="btn btn-primary max-w-full">
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></svg>
+        <span class="truncate">{profile.email}</span>
+      </a>
+      <a href={profile.linkedin} target="_blank" rel="noopener noreferrer" class="btn btn-ghost-dark">
+        LinkedIn
+        <svg class="btn-arrow" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M8 7h9v9" /></svg>
+        <span class="sr-only">(opens in a new tab)</span>
+      </a>
+      <a href={profile.cv} download class="btn btn-ghost-dark">Download CV (PDF)</a>
+    </div>
+  </div>
+
+  <footer class="relative border-t border-white/10">
+    <div class="container-content flex flex-col gap-2 py-6 text-[13px] text-white/70 sm:flex-row sm:items-center sm:justify-between">
+      <p>© {year} {profile.name}</p>
+      <p>Planned in sprints, shipped on time.</p>
+    </div>
+  </footer>
+</section>

@@ -1,0 +1,26 @@
+---
+import type { Stat } from '../data/profile';
+interface Props {
+  stat: Stat;
+}
+const { stat } = Astro.props;
+const display = stat.value.toFixed(stat.decimals);
+---
+
+<div
+  class:list={[
+    'stat-card rounded-card border p-5 md:p-6',
+    stat.dark ? 'border-ink bg-ink text-white' : 'border-line bg-white',
+  ]}
+>
+  <p
+    class:list={['font-display text-[34px] leading-none font-semibold tracking-tight md:text-[40px]', stat.dark && 'text-blue-light']}
+    data-count={stat.value}
+    data-decimals={stat.decimals}
+  >
+    {display}
+  </p>
+  <p class:list={['mt-3 text-[13px] leading-snug md:text-sm', stat.dark ? 'text-white/80' : 'text-muted']}>
+    {stat.label}
+  </p>
+</div>

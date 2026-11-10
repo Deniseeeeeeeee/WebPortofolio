@@ -1,0 +1,61 @@
+---
+import { profile, stats } from '../data/profile';
+import StatCard from './StatCard.astro';
+import ImageSlot from './ImageSlot.astro';
+---
+
+<section id="top" class="bg-hero relative overflow-hidden pt-28 pb-16 md:pt-36 md:pb-24" aria-labelledby="hero-title">
+  <div class="hero-glow glow-blue -top-40 -right-32 h-[620px] w-[620px]" aria-hidden="true"></div>
+
+  <div class="container-content relative">
+    <div class="grid items-center gap-12 md:grid-cols-[3fr_2fr] md:gap-10 lg:gap-16">
+      <div>
+        <p class="hero-fade inline-flex items-center gap-2 rounded-full border border-blue/20 bg-blue-soft px-3 py-1.5 text-[13px] font-medium text-blue-dark">
+          <span class="h-1.5 w-1.5 rounded-full bg-blue" aria-hidden="true"></span>
+          {profile.badge}
+        </p>
+
+        <h1 id="hero-title" class="hero-title h1-hero mt-6">
+          {profile.headline.before}<span class="text-blue">{profile.headline.accent}</span>{profile.headline.after}
+        </h1>
+
+        <p class="hero-fade text-lead mt-6 max-w-[34rem] text-muted">{profile.summary}</p>
+
+        <div class="hero-fade mt-8 flex flex-wrap gap-3">
+          <a href="#projects" class="btn btn-primary">
+            See Projects
+            <svg class="btn-arrow" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+          </a>
+          <a href={profile.cv} download class="btn btn-outline">Download CV</a>
+        </div>
+      </div>
+
+      <div class="hero-photo-wrap mx-auto w-full max-w-[420px]">
+        <div class="hero-photo" data-hero-photo>
+          <ImageSlot
+            src="profile"
+            alt="Portrait of Denise Aditya"
+            label="Profile photo"
+            size="800 × 1000 px"
+            aspect="4 / 5"
+            icon="user"
+            loading="eager"
+            widths={[420, 640, 840]}
+            sizes="(min-width: 768px) 420px, 90vw"
+            class="shadow-[0_24px_60px_-30px_rgb(37_99_235_/_0.35)]"
+          />
+        </div>
+      </div>
+    </div>
+
+    <ul class="stats mt-14 grid grid-cols-2 gap-3 md:mt-20 md:grid-cols-4 md:gap-4" aria-label="Highlights">
+      {
+        stats.map((s) => (
+          <li class="stat-item">
+            <StatCard stat={s} />
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>

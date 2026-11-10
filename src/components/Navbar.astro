@@ -1,0 +1,140 @@
+---
+import { profile } from '../data/profile';
+const links = [
+  { href: '#timeline', label: 'Timeline' },
+  { href: '#projects', label: 'Projects' },
+  { href: '#about', label: 'About' },
+];
+---
+
+<header id="navbar" class="navbar fixed inset-x-0 top-0 z-50 border-b border-transparent transition-[background-color,border-color,backdrop-filter] duration-300">
+  <nav class="container-content flex h-16 items-center justify-between md:h-[72px]" aria-label="Main">
+    <a href="#top" class="font-display text-[19px] font-bold tracking-tight text-ink" data-nav-link>
+      {profile.name}<span class="text-blue">.</span>
+    </a>
+
+    <div class="hidden items-center gap-1 md:flex">
+      {
+        links.map((l) => (
+          <a href={l.href} class="nav-link rounded-md px-3 py-2 text-[15px] font-medium text-ink transition-colors hover:text-blue" data-nav-link data-section={l.href.slice(1)}>
+            {l.label}
+          </a>
+        ))
+      }
+      <a href="#contact" class="btn btn-ink ml-3 !min-h-10 !px-4 text-sm" data-nav-link>Contact Me</a>
+    </div>
+
+    <button
+      type="button"
+      class="menu-btn -mr-2 inline-flex h-11 w-11 items-center justify-center rounded-lg text-ink md:hidden"
+      aria-controls="mobile-menu"
+      aria-expanded="false"
+      aria-label="Open menu"
+    >
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path class="menu-line-1" d="M4 7h16" />
+        <path class="menu-line-2" d="M4 12h16" />
+        <path class="menu-line-3" d="M4 17h16" />
+      </svg>
+    </button>
+  </nav>
+
+  <div id="mobile-menu" class="mobile-menu hidden border-t border-line bg-white md:hidden">
+    <div class="container-content flex flex-col py-3">
+      {
+        links.map((l) => (
+          <a href={l.href} class="nav-link flex min-h-12 items-center border-b border-line text-[17px] font-medium text-ink" data-nav-link data-section={l.href.slice(1)}>
+            {l.label}
+          </a>
+        ))
+      }
+      <a href="#contact" class="btn btn-ink mt-4 mb-2 w-full" data-nav-link>Contact Me</a>
+    </div>
+  </div>
+</header>
+
+<style>
+  .navbar.is-scrolled,
+  .navbar.is-open {
+    background-color: rgb(255 255 255 / 0.8);
+    border-bottom-color: var(--color-line);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .navbar.is-open {
+    background-color: #fff;
+  }
+  .nav-link.is-active {
+    color: var(--color-blue);
+  }
+  .menu-btn path {
+    transition: transform 0.25s ease, opacity 0.2s ease;
+    transform-origin: 12px 12px;
+  }
+  .navbar.is-open .menu-line-1 {
+    transform: translateY(5px) rotate(45deg);
+  }
+  .navbar.is-open .menu-line-2 {
+    opacity: 0;
+  }
+  .navbar.is-open .menu-line-3 {
+    transform: translateY(-5px) rotate(-45deg);
+  }
+</style>
+
+<script>
+  const nav = document.getElementById('navbar')!;
+  const btn = nav.querySelector<HTMLButtonElement>('.menu-btn')!;
+  const menu = document.getElementById('mobile-menu')!;
+
+  // Transparent at top, frosted after 40px
+  const onScroll = () => nav.classList.toggle('is-scrolled', window.scrollY > 40);
+  onScroll();
+  window.addEventListener('scroll', onScroll, { passive: true });
+
+  // Mobile menu
+  const setOpen = (open: boolean) => {
+    nav.classList.toggle('is-open', open);
+    menu.classList.toggle('hidden', !open);
+    btn.setAttribute('aria-expanded', String(open));
+    btn.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+  };
+  btn.addEventListener('click', () => setOpen(btn.getAttribute('aria-expanded') !== 'true'));
+  menu.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => setOpen(false)));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && btn.getAttribute('aria-expanded') === 'true') {
+      setOpen(false);
+      btn.focus();
+    }
+  });
+  window.matchMedia('(min-width: 768px)').addEventListener('change', (e) => e.matches && setOpen(false));
+
+  // Active link for the section in view
+  const links = Array.from(nav.querySelectorAll<HTMLAnchorElement>('.nav-link[data-section]'));
+  const ids = [...new Set(links.map((l) => l.dataset.section!))];
+  const visible = new Map<string, number>();
+  const io = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((e) => visible.set(e.target.id, e.isIntersecting ? e.intersectionRatio : 0));
+      let best = '';
+      let bestRatio = 0;
+      visible.forEach((r, id) => {
+        if (r > bestRatio) {
+          bestRatio = r;
+          best = id;
+        }
+      });
+      links.forEach((l) => {
+        const active = l.dataset.section === best;
+        l.classList.toggle('is-active', active);
+        if (active) l.setAttribute('aria-current', 'location');
+        else l.removeAttribute('aria-current');
+      });
+    },
+    { rootMargin: '-72px 0px -40% 0px', threshold: [0, 0.1, 0.25, 0.5, 0.75, 1] },
+  );
+  ids.forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) io.observe(el);
+  });
+</script>

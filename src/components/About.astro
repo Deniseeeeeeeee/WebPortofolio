@@ -1,0 +1,69 @@
+---
+import { experience, skills, education } from '../data/experience';
+import { formatRangeCompact } from '../lib/dates';
+import SectionLabel from './SectionLabel.astro';
+---
+
+<section id="about" class="bg-about section-pad" aria-labelledby="about-title">
+  <div class="container-content">
+    <SectionLabel text="03 / ABOUT" />
+    <h2 id="about-title" class="h2-section reveal-h2 mt-3">Beyond the projects</h2>
+
+    <div class="mt-10 grid gap-5 md:mt-12 lg:grid-cols-[3fr_2fr]">
+      <div class="about-card card p-6 md:p-8">
+        <h3 class="label-mono text-[12px] tracking-[0.08em] text-muted uppercase">Leadership &amp; experience</h3>
+        <ul class="mt-2">
+          {
+            experience.map((e) => (
+              <li class="exp-item flex flex-col gap-1 border-b border-line py-5 last:border-b-0 last:pb-0 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+                <div>
+                  <p class="font-semibold text-ink">
+                    {e.role} · {e.org}
+                  </p>
+                  <p class="mt-1 text-[14px] text-muted">{e.line}</p>
+                </div>
+                <p class="label-mono order-first shrink-0 text-[12px] text-muted sm:order-none sm:pt-0.5">
+                  {formatRangeCompact(e.start, e.end)}
+                </p>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+
+      <div class="flex flex-col gap-5">
+        <div class="about-card card p-6 md:p-8">
+          {
+            skills.map((g, i) => (
+              <div class:list={[i > 0 && 'mt-6']}>
+                <h3 class="label-mono text-[12px] tracking-[0.08em] text-muted uppercase">{g.title}</h3>
+                <ul class="mt-3 flex flex-wrap gap-2">
+                  {g.items.map((item) => (
+                    <li
+                      class:list={[
+                        'skill-chip chip',
+                        g.style === 'blue' ? 'bg-blue-soft text-blue-dark' : 'border border-line bg-white text-ink',
+                      ]}
+                    >
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))
+          }
+        </div>
+
+        <div class="about-card rounded-card bg-ink p-6 text-white md:p-8">
+          <h3 class="label-mono text-[12px] tracking-[0.08em] text-white/70 uppercase">Education</h3>
+          <p class="mt-3 font-display text-[22px] font-semibold tracking-tight">{education.school}</p>
+          <p class="mt-1 text-[14px] text-white/75">{education.program}</p>
+          <div class="mt-5 flex items-center justify-between gap-4">
+            <p class="text-[15px] font-semibold text-blue-light">{education.gpa}</p>
+            <p class="label-mono text-[12px] text-white/70">{education.years}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

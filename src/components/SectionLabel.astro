@@ -1,0 +1,11 @@
+---
+interface Props {
+  text: string;
+  dark?: boolean;
+}
+const { text, dark = false } = Astro.props;
+---
+
+<p class:list={['label-mono uppercase', dark ? 'text-blue-light' : 'text-blue-dark']} data-typed>
+  {text}
+</p>
