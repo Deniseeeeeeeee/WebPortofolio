@@ -1,0 +1,19 @@
+---
+import JiraTimeline from './JiraTimeline.vue';
+import SectionLabel from './SectionLabel.astro';
+const buildTime = new Date().toISOString();
+---
+
+<section id="timeline" class="bg-timeline section-pad" aria-labelledby="timeline-title">
+  <div class="container-content">
+    <SectionLabel text="01 / ROADMAP" />
+    <h2 id="timeline-title" class="h2-section reveal-h2 mt-3">My 2025–2026 timeline</h2>
+    <p class="text-lead mt-4 max-w-[34rem] text-muted">
+      Projects and leadership roles, laid out the way I plan work every day: as a Jira roadmap.
+    </p>
+
+    <div class="mt-10 md:mt-12">
+      <JiraTimeline client:visible buildTime={buildTime} />
+    </div>
+  </div>
+</section>
