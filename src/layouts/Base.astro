@@ -27,6 +27,14 @@ const ogImage = new URL('/og-image.png', Astro.site);
     <link rel="canonical" href={canonical} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="sitemap" href="/sitemap-index.xml" />
+    <script is:inline>
+      // Hide hero content only until the entrance animation starts (avoids a flash).
+      // Fail-safe: if animations never start (JS error, slow network), show everything after 2.5s.
+      if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        document.documentElement.classList.add('js-anim');
+        setTimeout(function () { document.documentElement.classList.remove('js-anim'); }, 2500);
+      }
+    </script>
 
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
@@ -47,5 +55,8 @@ const ogImage = new URL('/og-image.png', Astro.site);
   </head>
   <body>
     <slot />
+    <script>
+      import '../scripts/animations.ts';
+    </script>
   </body>
 </html>

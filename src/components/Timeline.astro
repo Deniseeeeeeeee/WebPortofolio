@@ -13,7 +13,7 @@ const buildTime = new Date().toISOString();
     </p>
 
     <div class="mt-10 md:mt-12">
-      <JiraTimeline client:visible buildTime={buildTime} />
+      <JiraTimeline client:visible={{ rootMargin: "300px" }} buildTime={buildTime} />
     </div>
   </div>
 </section>

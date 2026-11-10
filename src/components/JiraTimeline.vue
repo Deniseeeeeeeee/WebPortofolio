@@ -80,6 +80,7 @@ const ariaFor = (title: string, role: string, dates: string, status: Status) =>
 onMounted(async () => {
   now.value = new Date();
   await nextTick();
+  (window as unknown as { __timelineMounted?: boolean }).__timelineMounted = true;
   window.dispatchEvent(new CustomEvent('timeline:mounted'));
 });
 </script>

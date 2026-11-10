@@ -284,6 +284,31 @@ html.lenis body {
   line-height: 1.3;
 }
 
+/* Entrance: hero is hidden only while html.js-anim is set (added + removed by JS, with a fail-safe) */
+@media (prefers-reduced-motion: no-preference) {
+  .js-anim .hero-title,
+  .js-anim .hero-fade,
+  .js-anim [data-hero-photo] {
+    opacity: 0;
+  }
+}
+
+/* Typed section label cursor */
+.typed-cursor {
+  display: inline-block;
+  width: 0.55em;
+  height: 1.05em;
+  margin-left: 2px;
+  vertical-align: -0.15em;
+  background: currentColor;
+  animation: cursor-blink 0.9s steps(1) infinite;
+}
+@keyframes cursor-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
 /* Case study images: hover lift + zoom, parallax image is 10% taller than its frame */
 .img-slot {
   transition:
