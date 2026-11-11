@@ -1,8 +1,13 @@
 ---
-import { projects } from '../data/projects';
+import type { ProjectRow } from '../lib/content/types';
 import SectionLabel from './SectionLabel.astro';
 import ProjectCase from './ProjectCase.astro';
 import Lightbox from './Lightbox.astro';
+
+interface Props {
+  projects: ProjectRow[];
+}
+const { projects } = Astro.props;
 ---
 
 <section id="projects" class="section-pad bg-white" aria-labelledby="projects-title">

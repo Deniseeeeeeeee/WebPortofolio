@@ -2,19 +2,30 @@
 import Base from '../layouts/Base.astro';
 import Navbar from '../components/Navbar.astro';
 import Hero from '../components/Hero.astro';
+import Timeline from '../components/Timeline.astro';
+import Projects from '../components/Projects.astro';
 import About from '../components/About.astro';
 import Contact from '../components/Contact.astro';
-import Projects from '../components/Projects.astro';
-import Timeline from '../components/Timeline.astro';
+import { getSiteData } from '../lib/content/repo';
+import { mediaUrl } from '../lib/media';
+
+export const prerender = false;
+
+const data = await getSiteData();
+const { profile } = data;
+const cvUrl = profile.cv ? mediaUrl(profile.cv) : '/cv/CV_Denise_Aditya.pdf';
+
+// Served from Vercel's CDN; edits in /admin show up within ~30 seconds.
+Astro.response.headers.set('Cache-Control', 'public, max-age=0, s-maxage=30, stale-while-revalidate=86400');
 ---
 
-<Base>
-  <Navbar />
+<Base title={`${profile.name} · ${profile.role}`} description={profile.summary}>
+  <Navbar name={profile.name} />
   <main>
-    <Hero />
-    <Timeline />
-    <Projects />
-    <About />
-    <Contact />
+    <Hero profile={profile} stats={data.stats} cvUrl={cvUrl} />
+    <Timeline rows={data.timeline} owner={profile.name} />
+    <Projects projects={data.projects} />
+    <About experience={data.experience} skills={data.skills} education={data.education} />
+    <Contact profile={profile} cvUrl={cvUrl} />
   </main>
 </Base>

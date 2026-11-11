@@ -1,7 +1,14 @@
 ---
-import { experience, skills, education } from '../data/experience';
+import type { Education, ExperienceRow, SkillGroupRow } from '../lib/content/types';
 import { formatRangeCompact } from '../lib/dates';
 import SectionLabel from './SectionLabel.astro';
+
+interface Props {
+  experience: ExperienceRow[];
+  skills: SkillGroupRow[];
+  education: Education;
+}
+const { experience, skills, education } = Astro.props;
 ---
 
 <section id="about" class="bg-about section-pad" aria-labelledby="about-title">

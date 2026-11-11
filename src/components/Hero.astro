@@ -1,7 +1,14 @@
 ---
-import { profile, stats } from '../data/profile';
+import type { Profile, StatRow } from '../lib/content/types';
 import StatCard from './StatCard.astro';
 import ImageSlot from './ImageSlot.astro';
+
+interface Props {
+  profile: Profile;
+  stats: StatRow[];
+  cvUrl: string;
+}
+const { profile, stats, cvUrl } = Astro.props;
 ---
 
 <section id="top" class="bg-hero relative overflow-hidden pt-28 pb-16 md:pt-36 md:pb-24" aria-labelledby="hero-title">
@@ -16,7 +23,7 @@ import ImageSlot from './ImageSlot.astro';
         </p>
 
         <h1 id="hero-title" class="hero-title h1-hero mt-6">
-          {profile.headline.before}<span class="text-blue">{profile.headline.accent}</span>{profile.headline.after}
+          {profile.headlineBefore}<span class="text-blue">{profile.headlineAccent}</span>{profile.headlineAfter}
         </h1>
 
         <p class="hero-fade text-lead mt-6 max-w-[34rem] text-muted">{profile.summary}</p>
@@ -26,15 +33,15 @@ import ImageSlot from './ImageSlot.astro';
             See Projects
             <svg class="btn-arrow" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
           </a>
-          <a href={profile.cv} download class="btn btn-outline">Download CV</a>
+          <a href={cvUrl} download="CV_Denise_Aditya.pdf" class="btn btn-outline">Download CV</a>
         </div>
       </div>
 
       <div class="hero-photo-wrap mx-auto w-full max-w-[420px]">
         <div class="hero-photo" data-hero-photo>
           <ImageSlot
-            src="profile"
-            alt="Portrait of Denise Aditya"
+            media={profile.photo}
+            alt={`Portrait of ${profile.name}`}
             label="Profile photo"
             size="800 × 1000 px"
             aspect="4 / 5"

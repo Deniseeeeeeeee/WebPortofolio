@@ -1,0 +1,70 @@
+export const SCHEMA = [
+  `CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS stats (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    value REAL NOT NULL,
+    decimals INTEGER NOT NULL DEFAULT 0,
+    label TEXT NOT NULL,
+    dark INTEGER NOT NULL DEFAULT 0,
+    sort INTEGER NOT NULL DEFAULT 0
+  )`,
+  `CREATE TABLE IF NOT EXISTS timeline (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    key TEXT NOT NULL,
+    title TEXT NOT NULL,
+    grp TEXT NOT NULL DEFAULT 'projects',
+    start TEXT NOT NULL,
+    end TEXT,
+    status TEXT NOT NULL DEFAULT 'done',
+    color TEXT NOT NULL DEFAULT '#6E5DC6',
+    role TEXT NOT NULL DEFAULT '',
+    parent_id INTEGER REFERENCES timeline(id) ON DELETE CASCADE,
+    type TEXT NOT NULL DEFAULT 'task',
+    sort INTEGER NOT NULL DEFAULT 0
+  )`,
+  `CREATE TABLE IF NOT EXISTS projects (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    key TEXT NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    start TEXT NOT NULL,
+    end TEXT,
+    location TEXT NOT NULL DEFAULT '',
+    in_progress INTEGER NOT NULL DEFAULT 0,
+    facts TEXT NOT NULL DEFAULT '[]',
+    bullets TEXT NOT NULL DEFAULT '[]',
+    tags TEXT NOT NULL DEFAULT '[]',
+    main_style TEXT NOT NULL DEFAULT 'light',
+    images TEXT NOT NULL DEFAULT '[]',
+    sort INTEGER NOT NULL DEFAULT 0
+  )`,
+  `CREATE TABLE IF NOT EXISTS experience (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    role TEXT NOT NULL,
+    org TEXT NOT NULL,
+    start TEXT NOT NULL,
+    end TEXT,
+    line TEXT NOT NULL DEFAULT '',
+    sort INTEGER NOT NULL DEFAULT 0
+  )`,
+  `CREATE TABLE IF NOT EXISTS skill_groups (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    style TEXT NOT NULL DEFAULT 'outline',
+    items TEXT NOT NULL DEFAULT '[]',
+    sort INTEGER NOT NULL DEFAULT 0
+  )`,
+  `CREATE TABLE IF NOT EXISTS media (
+    id TEXT PRIMARY KEY,
+    mime TEXT NOT NULL,
+    data BLOB NOT NULL,
+    width INTEGER NOT NULL DEFAULT 0,
+    height INTEGER NOT NULL DEFAULT 0,
+    size INTEGER NOT NULL DEFAULT 0,
+    name TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`,
+];

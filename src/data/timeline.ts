@@ -5,7 +5,7 @@ export interface TimelineChild {
   title: string;
   type: 'story' | 'task';
   start: string; // 'YYYY-MM'
-  end: string; // 'YYYY-MM'
+  end: string | null; // 'YYYY-MM', null = ongoing
   status: Status;
 }
 

@@ -1,0 +1,64 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { getSiteData } from '../../lib/content/repo';
+
+export const prerender = false;
+
+const d = await getSiteData();
+const projectImages = d.projects.flatMap((p) => p.images);
+const todo = [
+  !d.profile.photo && { text: 'Upload a profile photo (800 × 1000 px)', href: '/admin/profile' },
+  !d.profile.cv && { text: 'Upload your CV (PDF)', href: '/admin/profile' },
+  projectImages.some((i) => !i.media) && {
+    text: `Add project screenshots (${projectImages.filter((i) => !i.media).length} empty slots)`,
+    href: '/admin/projects',
+  },
+].filter(Boolean) as { text: string; href: string }[];
+
+const cards = [
+  { href: '/admin/profile', title: 'Profile & education', meta: d.profile.name },
+  { href: '/admin/stats', title: 'Stats', meta: `${d.stats.length} cards` },
+  { href: '/admin/timeline', title: 'Timeline', meta: `${d.timeline.filter((t) => t.parentId === null).length} epics · ${d.timeline.filter((t) => t.parentId !== null).length} children` },
+  { href: '/admin/projects', title: 'Projects', meta: `${d.projects.length} case studies` },
+  { href: '/admin/experience', title: 'Experience', meta: `${d.experience.length} roles` },
+  { href: '/admin/skills', title: 'Skills', meta: `${d.skills.length} groups · ${d.skills.reduce((n, g) => n + g.items.length, 0)} skills` },
+];
+---
+
+<AdminLayout title="Dashboard" active="dashboard">
+  <h1 class="font-display text-[32px] font-semibold tracking-tight">Dashboard</h1>
+  <p class="mt-1 text-muted">Everything on the public page comes from here.</p>
+
+  {
+    todo.length > 0 && (
+      <section class="mt-8 rounded-card border border-blue/20 bg-blue-soft p-5" aria-labelledby="todo-title">
+        <h2 id="todo-title" class="text-[15px] font-semibold text-blue-dark">Still missing</h2>
+        <ul class="mt-2 space-y-1">
+          {todo.map((t) => (
+            <li>
+              <a href={t.href} class="inline-flex min-h-9 items-center text-[14px] text-ink underline decoration-blue/40 underline-offset-2 hover:decoration-blue">
+                {t.text}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+
+  <ul class="mt-8 grid gap-4 sm:grid-cols-2">
+    {
+      cards.map((c) => (
+        <li>
+          <a href={c.href} class="card group flex h-full items-center justify-between gap-4 p-5 transition-shadow hover:shadow-[0_12px_30px_-18px_rgb(10_10_10_/_0.35)]">
+            <span>
+              <span class="block font-semibold">{c.title}</span>
+              <span class="mt-0.5 block text-[14px] text-muted">{c.meta}</span>
+            </span>
+            <span aria-hidden="true" class="text-muted transition-transform group-hover:translate-x-1">→</span>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</AdminLayout>

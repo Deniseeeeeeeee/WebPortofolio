@@ -1,0 +1,164 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import FormField from '../../../components/admin/FormField.astro';
+import ImageInput from '../../../components/admin/ImageInput.astro';
+import { collections, isCollection } from '../../../lib/admin/collections';
+import { parseFields, type Errors } from '../../../lib/admin/fields';
+import { deleteRow, nextSort } from '../../../lib/content/repo';
+import { deleteMedia, saveImage, UploadError } from '../../../lib/media';
+import type { ProjectImage, ProjectRow } from '../../../lib/content/types';
+
+export const prerender = false;
+
+const { collection, id: idParam } = Astro.params;
+if (!isCollection(collection)) return new Response('Not found', { status: 404 });
+const def = collections[collection];
+const isNew = idParam === 'new';
+const id = isNew ? undefined : Number(idParam);
+if (!isNew && !Number.isInteger(id)) return new Response('Not found', { status: 404 });
+
+const all = await def.list();
+const current = isNew ? undefined : all.find((r) => r.id === id);
+if (!isNew && !current) return Astro.redirect(`/admin/${def.id}`);
+
+const fields = def.fields({ all, current });
+const isProject = def.id === 'projects';
+const project = current as ProjectRow | undefined;
+const blankImages: ProjectImage[] = [
+  { label: 'Main screenshot', alt: '', media: null },
+  { label: 'Second image', alt: '', media: null },
+  { label: 'Third image', alt: '', media: null },
+];
+const images = project?.images ?? blankImages;
+
+let errors: Errors = {};
+let raw: FormData | null = null;
+let uploadError = '';
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+
+  if (form.get('_action') === 'delete' && current) {
+    await def.remove?.(current, all);
+    await deleteRow(def.id, current.id);
+    return Astro.redirect(`/admin/${def.id}?deleted=1`);
+  }
+
+  const { values, errors: errs } = parseFields(fields, form);
+  errors = errs;
+  if (values.start && values.end && String(values.end) < String(values.start)) errors.end = 'End month must be after the start month.';
+
+  if (!Object.keys(errors).length) {
+    try {
+      if (isNew && !form.get('sort')) values.sort = await nextSort(def.id);
+      if (isProject) {
+        const next: ProjectImage[] = [];
+        for (let i = 0; i < 3; i++) {
+          const old = images[i];
+          let media = old.media;
+          const uploaded = await saveImage(form.get(`img${i}`), 2000);
+          if (uploaded || form.get(`img${i}__remove`) === 'on') {
+            await deleteMedia(media);
+            media = uploaded;
+          }
+          next.push({
+            label: String(form.get(`img${i}_label`) ?? '').trim() || old.label,
+            alt: String(form.get(`img${i}_alt`) ?? '').trim(),
+            media,
+          });
+        }
+        values.images = next;
+      }
+      await def.save(values, id);
+      return Astro.redirect(`/admin/${def.id}?saved=1`);
+    } catch (err) {
+      if (!(err instanceof UploadError)) throw err;
+      uploadError = err.message;
+    }
+  }
+  raw = form;
+}
+
+const source = (current ?? def.defaults ?? {}) as Record<string, unknown>;
+const rawOf = (name: string) => (raw ? String(raw.get(name) ?? '') : null);
+const valueOf = (name: string) => (name === 'parentId' && source.parentId != null ? String(source.parentId) : source[name]);
+const title = isNew ? `Add ${def.singular}` : `Edit ${def.singular}`;
+---
+
+<AdminLayout title={title} active={def.id}>
+  <a href={`/admin/${def.id}`} class="inline-flex min-h-10 items-center text-[14px] font-medium text-muted hover:text-ink">← {def.title}</a>
+  <h1 class="mt-1 font-display text-[32px] font-semibold tracking-tight">{title}</h1>
+
+  {
+    (Object.keys(errors).length > 0 || uploadError) && (
+      <p role="alert" class="mt-6 rounded-btn border border-[#fecaca] bg-[#fef2f2] px-4 py-3 text-[14px] text-[#b91c1c]">
+        {uploadError || 'Please fix the highlighted fields.'}
+      </p>
+    )
+  }
+
+  <form method="post" enctype={isProject ? 'multipart/form-data' : undefined} class="mt-8 space-y-8" id="edit-form">
+    <section class="card p-5 sm:p-6">
+      <div class="grid gap-5 sm:grid-cols-2">
+        {fields.map((f) => <FormField field={f} value={valueOf(f.name)} error={errors[f.name]} raw={rawOf(f.name)} />)}
+      </div>
+    </section>
+
+    {
+      isProject && (
+        <section class="card p-5 sm:p-6" aria-labelledby="s-images">
+          <h2 id="s-images" class="text-[17px] font-semibold">Images</h2>
+          <p class="mt-1 text-[14px] text-muted">1 main + 2 small, all 16:10 (ideally 1600 × 1000 px). Empty slots show a styled placeholder with the label.</p>
+          <div class="mt-5 space-y-5">
+            {images.map((im, i) => (
+              <div class="space-y-3">
+                <ImageInput name={`img${i}`} label={i === 0 ? 'Main image' : `Small image ${i}`} current={im.media} hint="JPG/PNG/WebP up to 4 MB." />
+                <div class="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label for={`f-img${i}_label`} class="mb-1.5 block text-[13px] font-semibold">Placeholder label</label>
+                    <input id={`f-img${i}_label`} name={`img${i}_label`} class="input" value={rawOf(`img${i}_label`) ?? im.label} />
+                  </div>
+                  <div>
+                    <label for={`f-img${i}_alt`} class="mb-1.5 block text-[13px] font-semibold">Alt text (describe the image)</label>
+                    <input id={`f-img${i}_alt`} name={`img${i}_alt`} class="input" value={rawOf(`img${i}_alt`) ?? im.alt} />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )
+    }
+
+    <div class="sticky bottom-0 -mx-4 flex flex-wrap gap-3 border-t border-line bg-mist/95 px-4 py-4 backdrop-blur sm:mx-0 sm:rounded-card sm:border sm:px-5">
+      <button class="btn btn-primary">{isNew ? `Add ${def.singular}` : 'Save changes'}</button>
+      <a href={`/admin/${def.id}`} class="btn btn-outline">Cancel</a>
+      {
+        !isNew && (
+          <button
+            type="submit"
+            form="delete-form"
+            class="btn btn-danger sm:ml-auto"
+          >
+            Delete
+          </button>
+        )
+      }
+    </div>
+  </form>
+
+  {
+    !isNew && (
+      <form method="post" id="delete-form" data-confirm={`Delete "${String(source.title ?? source.label ?? source.role ?? def.singular)}"?${def.id === 'timeline' && source.parentId == null ? ' Its children are deleted too.' : ''} This cannot be undone.`}>
+        <input type="hidden" name="_action" value="delete" />
+      </form>
+    )
+  }
+</AdminLayout>
+
+<script>
+  const del = document.getElementById('delete-form') as HTMLFormElement | null;
+  del?.addEventListener('submit', (e) => {
+    if (!confirm(del.dataset.confirm)) e.preventDefault();
+  });
+</script>

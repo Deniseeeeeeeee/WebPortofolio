@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, reactive, ref } from 'vue';
-import { range, timeline, groupLabels, type Status, type TimelineItem } from '../data/timeline';
+import { groupLabels, type Status, type TimelineItem } from '../data/timeline';
 import { monthIndex, fractionalMonthIndex, formatRange } from '../lib/dates';
 
-const props = defineProps<{ buildTime: string }>();
+const props = defineProps<{ buildTime: string; items: TimelineItem[]; range: { start: string; end: string }; owner: string }>();
+const timeline = props.items;
+const range = props.range;
 
 // `now` starts at build time (matches the server render), then switches to the real date on mount.
 const now = ref(new Date(props.buildTime));
@@ -39,14 +41,17 @@ function bar(start: string, end: string | null) {
 
 const statusLabel: Record<Status, string> = { done: 'Done', 'in-progress': 'In progress', todo: 'To do' };
 
-const groups = (['projects', 'leadership'] as const).map((g) => {
-  const items = timeline.filter((t) => t.group === g);
-  return { id: g, label: `${groupLabels[g]} · ${items.length}`, items };
-});
+const groups = (['projects', 'leadership'] as const)
+  .map((g) => {
+    const items = timeline.filter((t) => t.group === g);
+    return { id: g, label: `${groupLabels[g]} · ${items.length}`, items };
+  })
+  .filter((g) => g.items.length > 0);
 
-// Madana (PRJ-2) open by default
+// The first epic with children (Madana, PRJ-2) is open by default
+const firstWithChildren = timeline.find((t) => t.children?.length)?.key;
 const open = reactive<Record<string, boolean>>(
-  Object.fromEntries(timeline.filter((t) => t.children?.length).map((t) => [t.key, t.key === 'PRJ-2'])),
+  Object.fromEntries(timeline.filter((t) => t.children?.length).map((t) => [t.key, t.key === firstWithChildren])),
 );
 const toggle = (key: string) => (open[key] = !open[key]);
 
@@ -90,7 +95,7 @@ onMounted(async () => {
     <!-- Board header -->
     <div class="flex flex-col gap-4 px-4 pt-4 pb-4 sm:flex-row sm:items-end sm:justify-between md:px-5">
       <div>
-        <p class="text-[13px] text-jira-subtle">Projects / Denise Aditya / Timeline</p>
+        <p class="text-[13px] text-jira-subtle">Projects / {{ owner }} / Timeline</p>
         <h3 class="mt-1 font-sans text-[22px] font-semibold tracking-tight text-jira-text">Timeline</h3>
       </div>
       <div class="flex flex-wrap items-center gap-2">
@@ -109,11 +114,11 @@ onMounted(async () => {
 
     <!-- Board grid (scrolls horizontally under 1040px) -->
     <div ref="board" class="tl-scroll relative overflow-x-auto border-t border-jira-border" @scroll="hideTip">
-      <div class="tl-grid relative min-w-[1040px]">
+      <div class="tl-grid relative" :style="{ minWidth: `${300 + quarters.length * 92.5}px`, '--q': quarters.length }">
         <!-- Header -->
         <div class="flex h-10 border-b border-jira-border bg-jira-row text-[12px] font-semibold text-jira-subtle">
           <div class="tl-left left-0 sm:sticky z-20 flex w-[300px] shrink-0 items-center border-r border-jira-border bg-jira-row px-4">Epic</div>
-          <div class="grid flex-1 grid-cols-8">
+          <div class="grid flex-1" :style="{ gridTemplateColumns: `repeat(${quarters.length}, minmax(0, 1fr))` }">
             <div
               v-for="q in quarters"
               :key="q.label"
@@ -212,10 +217,10 @@ onMounted(async () => {
                         :class="['tl-bar h-4 rounded-[3px] outline-offset-2', c.status === 'done' ? 'bg-[#94C748]' : 'bg-[#579DFF]']"
                         tabindex="0"
                         role="img"
-                        :aria-label="ariaFor(c.title, c.type === 'story' ? 'Story' : 'Task', formatRange(c.start, c.end), c.status)"
-                        @mouseenter="showTip($event, c.title, `${t.title} · ${c.type === 'story' ? 'Story' : 'Task'}`, formatRange(c.start, c.end))"
+                        :aria-label="ariaFor(c.title, c.type === 'story' ? 'Story' : 'Task', formatRange(c.start, c.end, 'present'), c.status)"
+                        @mouseenter="showTip($event, c.title, `${t.title} · ${c.type === 'story' ? 'Story' : 'Task'}`, formatRange(c.start, c.end, 'present'))"
                         @mouseleave="hideTip"
-                        @focus="showTip($event, c.title, `${t.title} · ${c.type === 'story' ? 'Story' : 'Task'}`, formatRange(c.start, c.end))"
+                        @focus="showTip($event, c.title, `${t.title} · ${c.type === 'story' ? 'Story' : 'Task'}`, formatRange(c.start, c.end, 'present'))"
                         @blur="hideTip"
                         @keydown.esc="hideTip"
                       ></div>
@@ -267,7 +272,7 @@ onMounted(async () => {
 <style scoped>
 .tl-lane {
   background-image: linear-gradient(to right, var(--color-jira-border) 1px, transparent 1px);
-  background-size: 12.5% 100%;
+  background-size: calc(100% / var(--q, 8)) 100%;
   background-position: -1px 0;
 }
 .tl-bar {

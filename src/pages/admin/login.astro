@@ -1,0 +1,91 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import {
+  authConfigured,
+  checkCredentials,
+  clearLoginFailures,
+  createSession,
+  loginLockedFor,
+  recordLoginFailure,
+  usingDevCredentials,
+} from '../../lib/auth';
+
+export const prerender = false;
+
+const nextRaw = Astro.url.searchParams.get('next') ?? '/admin';
+const next = nextRaw.startsWith('/admin') && !nextRaw.startsWith('//') ? nextRaw : '/admin';
+
+if (Astro.locals.admin) return Astro.redirect(next);
+
+let error = '';
+let username = '';
+const ip = Astro.clientAddress ?? 'unknown';
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  username = String(form.get('username') ?? '').trim();
+  const password = String(form.get('password') ?? '');
+  const wait = loginLockedFor(ip);
+  if (wait) {
+    error = `Too many attempts. Try again in ${wait} seconds.`;
+  } else if (await checkCredentials(username, password)) {
+    clearLoginFailures(ip);
+    await createSession(Astro.cookies, username);
+    return Astro.redirect(next);
+  } else {
+    recordLoginFailure(ip);
+    error = 'Wrong username or password.';
+  }
+}
+
+const configured = authConfigured();
+const devHint = !import.meta.env.PROD && usingDevCredentials();
+---
+
+<AdminLayout title="Log in">
+  <main class="bg-hero flex min-h-screen items-center justify-center px-4 py-12">
+    <div class="w-full max-w-[400px]">
+      <a href="/" class="font-display text-[20px] font-bold tracking-tight">Denise Aditya<span class="text-blue">.</span></a>
+      <div class="card mt-6 p-6 shadow-[0_24px_60px_-30px_rgb(37_99_235_/_0.35)] sm:p-8">
+        <h1 class="font-display text-[26px] font-semibold tracking-tight">Admin login</h1>
+        <p class="mt-1 text-[14px] text-muted">Sign in to edit the portfolio content.</p>
+
+        {
+          !configured && (
+            <p role="alert" class="mt-5 rounded-btn border border-[#fecaca] bg-[#fef2f2] px-3 py-2.5 text-[14px] text-[#b91c1c]">
+              Login is disabled: set ADMIN_USERNAME, ADMIN_PASSWORD and SESSION_SECRET (16+ characters) in the environment variables.
+            </p>
+          )
+        }
+        {
+          error && (
+            <p role="alert" class="mt-5 rounded-btn border border-[#fecaca] bg-[#fef2f2] px-3 py-2.5 text-[14px] text-[#b91c1c]">
+              {error}
+            </p>
+          )
+        }
+
+        <form method="post" class="mt-6 space-y-4">
+          <div>
+            <label for="username" class="mb-1.5 block text-[14px] font-semibold">Username</label>
+            <input id="username" name="username" class="input" autocomplete="username" required value={username} autofocus />
+          </div>
+          <div>
+            <label for="password" class="mb-1.5 block text-[14px] font-semibold">Password</label>
+            <input id="password" name="password" type="password" class="input" autocomplete="current-password" required />
+          </div>
+          <button class="btn btn-primary w-full">Log in</button>
+        </form>
+
+        {
+          devHint && (
+            <p class="mt-5 rounded-btn bg-blue-soft px-3 py-2.5 text-[13px] text-blue-dark">
+              Local dev login: <b>admin</b> / <b>admin123</b>. Set your own in <code>.env</code>.
+            </p>
+          )
+        }
+      </div>
+      <a href="/" class="mt-6 inline-flex min-h-11 items-center text-[14px] font-medium text-muted hover:text-ink">← Back to the site</a>
+    </div>
+  </main>
+</AdminLayout>
