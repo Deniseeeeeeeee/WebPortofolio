@@ -1,0 +1,79 @@
+---
+import type { Field } from '../../lib/admin/fields';
+import { toInput } from '../../lib/admin/fields';
+
+interface Props {
+  field: Field;
+  value: unknown;
+  error?: string;
+  /** When re-rendering after a validation error, show exactly what was typed */
+  raw?: string | null;
+}
+const { field: f, value, error, raw } = Astro.props;
+const id = `f-${f.name}`;
+const v = raw ?? toInput(f, value);
+const describedBy = [f.help && `${id}-help`, error && `${id}-err`].filter(Boolean).join(' ') || undefined;
+const common = {
+  id,
+  name: f.name,
+  required: f.required,
+  'aria-invalid': (error ? 'true' : undefined) as 'true' | undefined,
+  'aria-describedby': describedBy,
+};
+const PALETTE = ['#6E5DC6', '#1D7AFC', '#2898BD', '#E2B203', '#E774BB', '#22A06B', '#8F7EE7'];
+---
+
+<div class:list={['min-w-0', f.half ? 'sm:col-span-1' : 'sm:col-span-2']}>
+  {
+    f.type === 'checkbox' ? (
+      <label class="flex min-h-11 cursor-pointer items-center gap-3 sm:mt-7">
+        <input type="checkbox" {...common} checked={v === 'on'} class="h-5 w-5 accent-blue" />
+        <span class="text-[14px] font-medium">{f.label}</span>
+      </label>
+    ) : (
+      <>
+        <label for={id} class="mb-1.5 block text-[14px] font-semibold">
+          {f.label}
+          {f.required && <span class="text-[#b91c1c]"> *</span>}
+        </label>
+        {['textarea', 'lines', 'facts', 'list'].includes(f.type) ? (
+          <textarea {...common} rows={f.rows ?? 3} placeholder={f.placeholder} class="input resize-y">{v}</textarea>
+        ) : f.type === 'select' ? (
+          <select {...common} class="input">
+            {f.options?.map((o) => (
+              <option value={o.value} selected={o.value === v}>{o.label}</option>
+            ))}
+          </select>
+        ) : f.type === 'color' ? (
+          <div class="flex items-center gap-2">
+            <input type="color" value={v || '#1D7AFC'} class="h-11 w-14 shrink-0 cursor-pointer rounded-btn border border-[#d4d4d4] bg-white p-1" aria-label={`${f.label} picker`} data-color-for={id} />
+            <input type="text" {...common} value={v} list={`${id}-palette`} pattern="#[0-9a-fA-F]{6}" class="input font-mono" />
+            <datalist id={`${id}-palette`}>{PALETTE.map((c) => <option value={c} />)}</datalist>
+          </div>
+        ) : (
+          <input
+            {...common}
+            type={f.type === 'month' || f.type === 'monthOptional' ? 'month' : f.type === 'number' ? 'number' : f.type === 'email' ? 'email' : f.type === 'url' ? 'url' : 'text'}
+            value={v}
+            step={f.step}
+            min={f.min}
+            max={f.max}
+            placeholder={f.placeholder ?? (f.type.startsWith('month') ? 'YYYY-MM' : undefined)}
+            class="input"
+          />
+        )}
+      </>
+    )
+  }
+  {f.help && <p id={`${id}-help`} class="mt-1.5 text-[13px] text-muted">{f.help}</p>}
+  {error && <p id={`${id}-err`} class="mt-1.5 text-[13px] font-medium text-[#b91c1c]">{error}</p>}
+</div>
+
+<script>
+  document.querySelectorAll<HTMLInputElement>('[data-color-for]').forEach((picker) => {
+    const text = document.getElementById(picker.dataset.colorFor!) as HTMLInputElement | null;
+    if (!text) return;
+    picker.addEventListener('input', () => (text.value = picker.value.toUpperCase()));
+    text.addEventListener('input', () => /^#[0-9a-fA-F]{6}$/.test(text.value) && (picker.value = text.value));
+  });
+</script>

@@ -1,0 +1,66 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { collections, isCollection } from '../../../lib/admin/collections';
+
+export const prerender = false;
+
+const { collection } = Astro.params;
+if (!isCollection(collection)) return new Response('Not found', { status: 404 });
+const def = collections[collection];
+const all = await def.list();
+const rows = def.order ? def.order(all) : all;
+---
+
+<AdminLayout title={def.title} active={def.id}>
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <h1 class="font-display text-[32px] font-semibold tracking-tight">{def.title}</h1>
+      <p class="mt-1 max-w-[36rem] text-muted">{def.description}</p>
+    </div>
+    <a href={`/admin/${def.id}/new`} class="btn btn-primary">+ Add {def.singular}</a>
+  </div>
+
+  {
+    rows.length === 0 ? (
+      <div class="card mt-8 p-10 text-center">
+        <p class="font-semibold">Nothing here yet</p>
+        <p class="mt-1 text-[14px] text-muted">This section is hidden on the public page until you add something.</p>
+      </div>
+    ) : (
+      <div class="card mt-8 overflow-x-auto">
+        <table class="w-full min-w-[560px] text-left text-[14px]">
+          <thead class="border-b border-line bg-[#fafafa] text-[12px] tracking-wide text-muted uppercase">
+            <tr>
+              {def.columns.map((c) => (
+                <th scope="col" class="px-4 py-3 font-semibold">{c}</th>
+              ))}
+              <th scope="col" class="px-4 py-3 text-right font-semibold">
+                <span class="sr-only">Actions</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => {
+              const cells = def.cells(r, all);
+              const nested = def.indent?.(r);
+              return (
+                <tr class="border-b border-line last:border-b-0 hover:bg-[#fafafa]">
+                  {cells.map((c, i) => (
+                    <td class:list={['px-4 py-3 align-top', i === 0 && 'font-mono text-[13px] text-muted', i === 1 && 'font-medium text-ink']}>
+                      {i === 0 && nested ? <span class="pl-5">↳ {c}</span> : c}
+                    </td>
+                  ))}
+                  <td class="px-4 py-2 text-right whitespace-nowrap">
+                    <a href={`/admin/${def.id}/${r.id}`} class="inline-flex min-h-10 items-center rounded-btn px-3 font-semibold text-blue-dark hover:bg-blue-soft">
+                      Edit<span class="sr-only"> {cells[1]}</span>
+                    </a>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    )
+  }
+</AdminLayout>

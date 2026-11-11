@@ -6,42 +6,56 @@ One-page portfolio built from `PRD.md` with Astro, TypeScript, Tailwind CSS v4, 
 
 ```bash
 npm install
-npm run dev        # http://localhost:4321
-npm run build      # type-check + static build into dist/
-npm run preview    # serve the production build
+cp .env.example .env   # optional locally; fill in for production
+npm run dev            # http://localhost:4321
 ```
 
-## Edit content
+- Public site: http://localhost:4321
+- Admin: http://localhost:4321/admin (local login without `.env`: **admin / admin123**)
 
-All copy lives in `src/data/`. Components only render it.
+The first request creates `data/local.db` (SQLite) and fills it with the CV content from `src/data/*.ts`.
+To start over from that content, stop the server and delete the `data/` folder.
 
-| File | What |
+## How it works
+
+| Part | Where |
 | --- | --- |
-| `src/data/profile.ts` | Name, headline, summary, email, LinkedIn, stats |
-| `src/data/timeline.ts` | Jira timeline epics and children (`YYYY-MM`; `end: null` = ongoing) |
-| `src/data/projects.ts` | Case studies (order = display order) |
-| `src/data/experience.ts` | Leadership, skills, education |
+| Public page (rendered on demand, cached 30 s on Vercel) | `src/pages/index.astro` |
+| Admin dashboard (CRUD for every section) | `src/pages/admin/` |
+| Login + signed session cookie, login throttling | `src/lib/auth.ts`, `src/middleware.ts` |
+| Database (libSQL: SQLite file locally, Turso in production) | `src/lib/db/` |
+| Content reads/writes | `src/lib/content/repo.ts` |
+| Admin forms (fields, validation) | `src/lib/admin/` |
+| Image + PDF uploads (resized to WebP, stored in the DB, served from `/media/<id>`) | `src/lib/media.ts`, `src/pages/media/[id].ts` |
+| Seed content (used only when the database is empty) | `src/data/*.ts` |
 
-## Add images (placeholders swap automatically)
+## Admin
 
-| Slot | Drop the file here (`.jpg`, `.png`, `.webp` or `.avif`) | Size |
-| --- | --- | --- |
-| Profile photo | `src/assets/profile.jpg` | 800 × 1000 |
-| Madana | `src/assets/projects/madana/main`, `jira`, `erd` | 1600 × 1000 |
-| Dimas Diajeng | `src/assets/projects/dimas/main`, `admin`, `mobile` | 1600 × 1000 |
-| SIMATKUL | `src/assets/projects/simatkul/main`, `usecase`, `srs` | 1600 × 1000 |
+| Page | What you can edit |
+| --- | --- |
+| Profile & education | Name, headline, summary, email, LinkedIn, profile photo, CV PDF, education card |
+| Stats | Number cards under the hero |
+| Timeline | Epics and their stories/tasks (pick a parent epic to make a child) |
+| Projects | Case studies: text, facts, bullets, tags and the 3 images |
+| Experience | Leadership & experience list |
+| Skills | Skill chip groups |
 
-Example: `src/assets/projects/madana/main.png`. Restart `npm run dev` if a new file isn't picked up.
+Uploads: images up to 4 MB (JPG, PNG, WebP, AVIF), CV as a PDF up to 4 MB.
 
-**CV:** put the PDF at `public/cv/CV_Denise_Aditya.pdf` (the Download CV buttons point there).
+## Deploy (GitHub + Vercel + Turso)
 
-## Deploy (GitHub + Vercel)
+1. **Database:** create a free account at https://turso.tech, create a database, then copy its URL (`libsql://…`) and create a token.
+2. **Vercel:** https://vercel.com/new → import the repo. Before deploying, open **Environment Variables** and add:
 
-1. Create an empty repo on GitHub (e.g. `portfolio`), then:
-   ```bash
-   git remote add origin https://github.com/<username>/portfolio.git
-   git push -u origin main
-   ```
-2. Go to vercel.com → **Add New… → Project** → import the repo. Vercel detects Astro; keep the defaults (build `npm run build`, output `dist`) and click **Deploy**.
-3. After the first deploy, update `site` in `astro.config.mjs` to your real Vercel URL or domain (used for sitemap and Open Graph), commit and push. Every push redeploys automatically.
-4. Custom domain: Vercel project → **Settings → Domains** → add `deniseaditya.com` (or `.dev`) and follow the DNS steps.
+   | Name | Value |
+   | --- | --- |
+   | `ADMIN_USERNAME` | your admin username |
+   | `ADMIN_PASSWORD` | a long password |
+   | `SESSION_SECRET` | random string, 32+ characters (`openssl rand -hex 32`) |
+   | `TURSO_DATABASE_URL` | `libsql://…` from Turso |
+   | `TURSO_AUTH_TOKEN` | the Turso token |
+
+3. Click **Deploy**. The first visit creates the tables and seeds the content. Log in at `/admin`.
+4. Update `site` in `astro.config.mjs` to your real URL or domain (used for sitemap and Open Graph), commit and push.
+
+In production the admin login stays disabled until the three admin variables are set; the local `admin / admin123` fallback never applies there.

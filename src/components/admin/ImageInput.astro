@@ -1,0 +1,51 @@
+---
+import type { MediaRef } from '../../lib/content/types';
+import { mediaUrl } from '../../lib/media';
+
+interface Props {
+  name: string;
+  label: string;
+  current: MediaRef | null | undefined;
+  hint?: string;
+  accept?: string;
+  kind?: 'image' | 'pdf';
+}
+const { name, label, current, hint, accept = 'image/jpeg,image/png,image/webp,image/avif', kind = 'image' } = Astro.props;
+const id = `f-${name}`;
+---
+
+<div class="rounded-card border border-line bg-white p-4">
+  <p class="text-[14px] font-semibold">{label}</p>
+  <div class="mt-3 flex flex-col gap-4 sm:flex-row sm:items-start">
+    <div class="flex h-24 w-full shrink-0 items-center justify-center overflow-hidden rounded-btn border border-dashed border-blue/40 bg-blue-soft sm:w-36">
+      {
+        current && kind === 'image' ? (
+          <img src={mediaUrl(current, 320)} alt="" class="h-full w-full object-cover" />
+        ) : current ? (
+          <a href={mediaUrl(current)} target="_blank" rel="noopener" class="text-[13px] font-semibold text-blue-dark underline">Open PDF</a>
+        ) : (
+          <span class="text-[12px] text-muted">Empty</span>
+        )
+      }
+    </div>
+    <div class="min-w-0 flex-1">
+      <label for={id} class="sr-only">{current ? `Replace ${label}` : `Upload ${label}`}</label>
+      <input
+        id={id}
+        type="file"
+        name={name}
+        accept={accept}
+        class="block w-full text-[14px] file:mr-3 file:min-h-10 file:cursor-pointer file:rounded-btn file:border-0 file:bg-ink file:px-4 file:text-[14px] file:font-semibold file:text-white"
+      />
+      {hint && <p class="mt-2 text-[13px] text-muted">{hint}</p>}
+      {
+        current && (
+          <label class="mt-2 flex min-h-10 cursor-pointer items-center gap-2 text-[14px]">
+            <input type="checkbox" name={`${name}__remove`} class="h-4 w-4 accent-[#b91c1c]" />
+            Remove current {kind === 'pdf' ? 'file' : 'image'}
+          </label>
+        )
+      }
+    </div>
+  </div>
+</div>

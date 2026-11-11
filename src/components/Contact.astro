@@ -1,7 +1,13 @@
 ---
-import { profile } from '../data/profile';
+import type { Profile } from '../lib/content/types';
 import SectionLabel from './SectionLabel.astro';
-const year = 2026;
+
+interface Props {
+  profile: Profile;
+  cvUrl: string;
+}
+const { profile, cvUrl } = Astro.props;
+const year = new Date().getFullYear();
 ---
 
 <section id="contact" class="bg-contact relative overflow-hidden text-white" aria-labelledby="contact-title">
@@ -26,7 +32,7 @@ const year = 2026;
         <svg class="btn-arrow" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M8 7h9v9" /></svg>
         <span class="sr-only">(opens in a new tab)</span>
       </a>
-      <a href={profile.cv} download class="btn btn-ghost-dark">Download CV (PDF)</a>
+      <a href={cvUrl} download="CV_Denise_Aditya.pdf" class="btn btn-ghost-dark">Download CV (PDF)</a>
     </div>
   </div>
 

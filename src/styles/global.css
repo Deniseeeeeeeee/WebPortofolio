@@ -343,3 +343,38 @@ html.lenis body {
     scroll-behavior: auto !important;
   }
 }
+
+/* ---------- Admin ---------- */
+@utility input {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #d4d4d4;
+  border-radius: var(--radius-btn);
+  background: #fff;
+  font-size: 15px;
+  line-height: 1.4;
+  color: var(--color-ink);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+  &:focus {
+    outline: none;
+    border-color: var(--color-blue);
+    box-shadow: 0 0 0 3px rgb(37 99 235 / 0.18);
+  }
+  &[aria-invalid='true'] {
+    border-color: #dc2626;
+  }
+}
+
+@utility btn-danger {
+  background: #fff;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  &:hover {
+    background: #fef2f2;
+    border-color: #f87171;
+  }
+}

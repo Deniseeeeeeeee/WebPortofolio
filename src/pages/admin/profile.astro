@@ -1,0 +1,110 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import FormField from '../../components/admin/FormField.astro';
+import ImageInput from '../../components/admin/ImageInput.astro';
+import { parseFields, type Errors, type Field } from '../../lib/admin/fields';
+import { getSetting, saveSetting } from '../../lib/content/repo';
+import { deleteMedia, saveImage, savePdf, UploadError } from '../../lib/media';
+import type { Education, Profile } from '../../lib/content/types';
+
+export const prerender = false;
+
+const profileFields: Field[] = [
+  { name: 'name', label: 'Name', type: 'text', required: true, half: true },
+  { name: 'role', label: 'Role (page title)', type: 'text', required: true, half: true, placeholder: 'Project Manager & System Analyst' },
+  { name: 'badge', label: 'Badge', type: 'text', placeholder: 'Open to internship · Yogyakarta, Indonesia' },
+  { name: 'headlineBefore', label: 'Headline: start', type: 'text', required: true, half: true, placeholder: 'Project Manager who ships on ' },
+  { name: 'headlineAccent', label: 'Headline: blue word', type: 'text', half: true, placeholder: 'schedule' },
+  { name: 'headlineAfter', label: 'Headline: end', type: 'text', half: true, placeholder: '.' },
+  { name: 'summary', label: 'Summary', type: 'textarea', rows: 3, required: true, help: 'Also used as the meta description for Google and link previews.' },
+  { name: 'email', label: 'Email', type: 'email', required: true, half: true },
+  { name: 'linkedin', label: 'LinkedIn URL', type: 'url', half: true },
+];
+const educationFields: Field[] = [
+  { name: 'school', label: 'School', type: 'text', required: true, half: true },
+  { name: 'program', label: 'Program', type: 'text', half: true },
+  { name: 'gpa', label: 'GPA line', type: 'text', half: true, placeholder: 'GPA 3.63 / 4.00' },
+  { name: 'years', label: 'Years', type: 'text', half: true, placeholder: '2024–2028' },
+];
+// Prefix education field names so both forms can share one <form>
+const eduFields = educationFields.map((f) => ({ ...f, name: `edu_${f.name}` }));
+
+let profile = await getSetting<Profile>('profile');
+let education = await getSetting<Education>('education');
+let errors: Errors = {};
+let raw: FormData | null = null;
+let uploadError = '';
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const p = parseFields(profileFields, form);
+  const e = parseFields(eduFields, form);
+  errors = { ...p.errors, ...e.errors };
+  if (!Object.keys(errors).length) {
+    try {
+      let photo = profile.photo ?? null;
+      let cv = profile.cv ?? null;
+      const newPhoto = await saveImage(form.get('photo'), 1000);
+      if (newPhoto || form.get('photo__remove') === 'on') {
+        await deleteMedia(photo);
+        photo = newPhoto;
+      }
+      const newCv = await savePdf(form.get('cv'));
+      if (newCv || form.get('cv__remove') === 'on') {
+        await deleteMedia(cv);
+        cv = newCv;
+      }
+      await saveSetting('profile', { ...(p.values as unknown as Profile), photo, cv });
+      await saveSetting('education', Object.fromEntries(educationFields.map((f) => [f.name, e.values[`edu_${f.name}`]])));
+      return Astro.redirect('/admin/profile?saved=1');
+    } catch (err) {
+      if (!(err instanceof UploadError)) throw err;
+      uploadError = err.message;
+    }
+  }
+  raw = form;
+}
+const rawOf = (name: string) => (raw ? String(raw.get(name) ?? '') : null);
+---
+
+<AdminLayout title="Profile & education" active="profile">
+  <h1 class="font-display text-[32px] font-semibold tracking-tight">Profile &amp; education</h1>
+  <p class="mt-1 text-muted">Hero text, contact links, photo, CV and the education card.</p>
+
+  {
+    (Object.keys(errors).length > 0 || uploadError) && (
+      <p role="alert" class="mt-6 rounded-btn border border-[#fecaca] bg-[#fef2f2] px-4 py-3 text-[14px] text-[#b91c1c]">
+        {uploadError || 'Please fix the highlighted fields.'}
+      </p>
+    )
+  }
+
+  <form method="post" enctype="multipart/form-data" class="mt-8 space-y-8">
+    <section class="card p-5 sm:p-6" aria-labelledby="s-profile">
+      <h2 id="s-profile" class="text-[17px] font-semibold">Profile</h2>
+      <div class="mt-5 grid gap-5 sm:grid-cols-2">
+        {profileFields.map((f) => <FormField field={f} value={(profile as unknown as Record<string, unknown>)[f.name]} error={errors[f.name]} raw={rawOf(f.name)} />)}
+      </div>
+    </section>
+
+    <section class="card p-5 sm:p-6" aria-labelledby="s-files">
+      <h2 id="s-files" class="text-[17px] font-semibold">Photo &amp; CV</h2>
+      <div class="mt-5 grid gap-4">
+        <ImageInput name="photo" label="Profile photo" current={profile.photo} hint="Portrait 4:5, ideally 800 × 1000 px. JPG/PNG/WebP up to 4 MB." />
+        <ImageInput name="cv" label="CV (PDF)" current={profile.cv} kind="pdf" accept="application/pdf" hint="PDF up to 4 MB. Used by both Download CV buttons." />
+      </div>
+    </section>
+
+    <section class="card p-5 sm:p-6" aria-labelledby="s-edu">
+      <h2 id="s-edu" class="text-[17px] font-semibold">Education card</h2>
+      <div class="mt-5 grid gap-5 sm:grid-cols-2">
+        {eduFields.map((f) => <FormField field={f} value={(education as unknown as Record<string, unknown>)[f.name.slice(4)]} error={errors[f.name]} raw={rawOf(f.name)} />)}
+      </div>
+    </section>
+
+    <div class="sticky bottom-0 -mx-4 flex gap-3 border-t border-line bg-mist/95 px-4 py-4 backdrop-blur sm:mx-0 sm:rounded-card sm:border sm:px-5">
+      <button class="btn btn-primary">Save changes</button>
+      <a href="/admin" class="btn btn-outline">Cancel</a>
+    </div>
+  </form>
+</AdminLayout>

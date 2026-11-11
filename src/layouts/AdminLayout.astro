@@ -1,0 +1,90 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  active?: string;
+}
+const { title, active } = Astro.props;
+const admin = Astro.locals.admin;
+
+const nav = [
+  { href: '/admin', label: 'Dashboard', id: 'dashboard' },
+  { href: '/admin/profile', label: 'Profile & education', id: 'profile' },
+  { href: '/admin/stats', label: 'Stats', id: 'stats' },
+  { href: '/admin/timeline', label: 'Timeline', id: 'timeline' },
+  { href: '/admin/projects', label: 'Projects', id: 'projects' },
+  { href: '/admin/experience', label: 'Experience', id: 'experience' },
+  { href: '/admin/skills', label: 'Skills', id: 'skills' },
+];
+const saved = Astro.url.searchParams.get('saved');
+const deleted = Astro.url.searchParams.get('deleted');
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>{title} · Admin</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body class="min-h-screen bg-mist">
+    {
+      admin ? (
+        <div class="lg:grid lg:min-h-screen lg:grid-cols-[248px_1fr]">
+          <aside class="border-b border-line bg-white lg:sticky lg:top-0 lg:h-screen lg:border-r lg:border-b-0">
+            <div class="flex items-center justify-between px-5 py-4 lg:py-6">
+              <a href="/admin" class="font-display text-[18px] font-bold tracking-tight">
+                Admin<span class="text-blue">.</span>
+              </a>
+              <a href="/" target="_blank" rel="noopener" class="text-[13px] font-medium text-blue-dark hover:underline lg:hidden">
+                View site ↗
+              </a>
+            </div>
+            <nav aria-label="Admin" class="flex gap-1 overflow-x-auto px-3 pb-3 lg:flex-col lg:overflow-visible lg:pb-0">
+              {nav.map((n) => (
+                <a
+                  href={n.href}
+                  aria-current={active === n.id ? 'page' : undefined}
+                  class:list={[
+                    'flex min-h-10 shrink-0 items-center rounded-btn px-3 text-[14px] font-medium whitespace-nowrap transition-colors',
+                    active === n.id ? 'bg-blue-soft text-blue-dark' : 'text-ink hover:bg-mist',
+                  ]}
+                >
+                  {n.label}
+                </a>
+              ))}
+            </nav>
+            <div class="hidden border-t border-line px-5 py-4 lg:absolute lg:inset-x-0 lg:bottom-0 lg:block">
+              <a href="/" target="_blank" rel="noopener" class="block text-[14px] font-medium text-blue-dark hover:underline">
+                View site ↗
+              </a>
+              <p class="mt-3 text-[13px] text-muted">Signed in as {admin.username}</p>
+              <form method="post" action="/admin/logout" class="mt-2">
+                <button class="text-[14px] font-medium text-ink underline-offset-2 hover:underline">Log out</button>
+              </form>
+            </div>
+          </aside>
+
+          <main class="px-4 py-8 sm:px-8 lg:px-12 lg:py-10">
+            <div class="mx-auto max-w-[920px]">
+              {(saved || deleted) && (
+                <p role="status" class="mb-6 rounded-btn border border-[#bbf7d0] bg-[#f0fdf4] px-4 py-3 text-[14px] text-[#166534]">
+                  {saved ? 'Saved.' : 'Deleted.'} The public page updates right away locally, and within about 30 seconds on Vercel.
+                </p>
+              )}
+              <slot />
+              <form method="post" action="/admin/logout" class="mt-12 lg:hidden">
+                <button class="btn btn-outline w-full">Log out ({admin.username})</button>
+              </form>
+            </div>
+          </main>
+        </div>
+      ) : (
+        <slot />
+      )
+    }
+  </body>
+</html>
